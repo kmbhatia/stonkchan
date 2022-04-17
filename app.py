@@ -11,7 +11,6 @@ import os
 config = ConfigParser()
 config.read("config.ini")
 auth = config['AUTH']["bot_key"]
-print(auth)
 
 today = date.today()
 currentyear = datetime.now().year
