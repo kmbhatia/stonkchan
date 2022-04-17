@@ -1,5 +1,4 @@
 import requests
-import pandas as pd
 from nsetools import Nse
 from io import StringIO
 import logging
@@ -11,12 +10,14 @@ import os
 config = ConfigParser()
 config.read("config.ini")
 auth = config['AUTH']["bot_key"]
+pwd = config["AUTH"]["pwd"]
+
 
 today = date.today()
 currentyear = datetime.now().year
 day = datetime.today().strftime('%A')
 
-logging.basicConfig(filename="/home/roark/stockchan/logfile.log", format='%(asctime)s %(message)s', filemode='a')
+logging.basicConfig(filename=pwd+"/logfile.log", format='%(asctime)s %(message)s', filemode='a')
 logger=logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -31,10 +32,10 @@ if((today not in [str(currentyear)+'-01-26', str(currentyear)+'-08-15']) and (da
 	for index, element in enumerate(top_gainers, start=0):
 			topgainerarray.append(element["symbol"])
 
-	if(os.path.exists("/home/roark/stockchan/PreviousDayStats")):
-		shelf = shelve.open("/home/roark/stockchan/PreviousDayStats", writeback = True)
+	if(os.path.exists(pwd+"/PreviousDayStats")):
+		shelf = shelve.open(pwd+"/PreviousDayStats", writeback = True)
 	else:
-		shelf = shelve.open("/home/roark/stockchan/PreviousDayStats", writeback = True)
+		shelf = shelve.open(pwd+"/PreviousDayStats", writeback = True)
 
 	bool = True
 	if("topgainers" not in shelf):
