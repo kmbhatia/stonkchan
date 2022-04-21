@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from datetime import datetime, date
 import shelve
 import os
+import re
 
 config = ConfigParser()
 config.read("config.ini")
@@ -52,8 +53,11 @@ if((today not in [str(currentyear)+'-01-26', str(currentyear)+'-08-15']) and (da
 
 		for scrip in topgainerarray:
 			message+='\n'+scrip
+		
+		message = message.replace("&", "%26")
 
 		URL ="https://api.telegram.org/"+auth+"/sendMessage?chat_id=@stonkchan&text="+message
+
 		response = requests.post(URL)
 		logger.info(": Telegram Bot Response Status Code: "+str(response))
 
