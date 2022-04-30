@@ -24,14 +24,11 @@ logger.setLevel(logging.INFO)
 
 
 if((today not in [str(currentyear)+'-01-26', str(currentyear)+'-08-15']) and (day not in ["Sunday","Saturday"])):
-	
-	topgainerarray=[]
 	nse = Nse()
-	top_gainers = nse.get_top_gainers()
-
-
-	for index, element in enumerate(top_gainers, start=0):
-			topgainerarray.append(element["symbol"])
+	parentarray=[]
+	parentarray.append(nse.get_top_gainers())
+	parentarray.append(nse.get_top_losers())
+	message =""
 
 	if(os.path.exists(pwd+"/PreviousDayStats")):
 		shelf = shelve.open(pwd+"/PreviousDayStats", writeback = True)
@@ -40,36 +37,50 @@ if((today not in [str(currentyear)+'-01-26', str(currentyear)+'-08-15']) and (da
 
 	bool = True
 	if("topgainers" not in shelf):
-		shelf['topgainers'] = topgainerarray
-	elif((shelf['topgainers']!= topgainerarray)):
-		shelf['topgainers'] = topgainerarray
-	elif(shelf['topgainers']==topgainerarray):
+		shelf['topgainers'] = nse.get_top_gainers()
+	elif((shelf['topgainers']!= nse.get_top_gainers())):
+		shelf['topgainers'] = nse.get_top_gainers()
+	elif(shelf['topgainers']==nse.get_top_gainers()):
 		bool = False
+
+	if("toplosers" not in shelf):
+		shelf['toplosers'] = nse.get_top_losers()
+	elif((shelf['toplosers']!= nse.get_top_losers())):
+		shelf['toplosers'] = nse.get_top_losers()
 
 	shelf.close()
 
-	if(bool):
-		message = "Top Gainers of the Day"
-
-		for scrip in topgainerarray:
-			message+='\n'+scrip
+	
+	for index, parent in enumerate(parentarray):
+		gainerloserarray=[]
+		print(index)
+		for element in parent:
+			object = {}
+			object["symbol"] = element['symbol']
+			object["ltp"] = element['ltp']
+			object["percentagegains"] = round(((element['ltp']-element['previousPrice'])/element['previousPrice'])*100, 2)
+			if(len(gainerloserarray)<5):
+				gainerloserarray.append(object)
+		print(gainerloserarray)
 		
-		message = message.replace("&", "%26")
-
-		URL ="https://api.telegram.org/"+auth+"/sendMessage?chat_id=@stonkchan&text="+message
-
-		response = requests.post(URL)
-		logger.info(": Telegram Bot Response Status Code: "+str(response))
-
-	else:
-		URL ="https://api.telegram.org/"+auth+"/sendMessage?chat_id=@stonkchan&text= Markets haven't moved on account of Holiday."
-		response = requests.post(URL)
-		logger.info(": Telegram Bot Response Status Code: "+str(response))		
+		if(bool):
+			if(index == 0):
+				message += "Top Gainers of the Day \n"
+			else:
+				message += "\n \n Top Losers of the Day \n"
+			for scrip in gainerloserarray:
+				message+='\n'+scrip['symbol']+': '+str(scrip['ltp'])+'('+str(scrip['percentagegains'])+'%) \n'
+			message = message.replace("&", "%26")
+		else:
+			message = "Markets haven't moved on account of Holiday."
 
 else:
 	if(day in ["Sunday","Saturday"]):
-		URL ="https://api.telegram.org/"+auth+"/sendMessage?chat_id=@stonkchan&text= Today is "+day+" hence the markets were closed."
-	elif(today not in [str(currentyear)+'-01-26', str(currentyear)+'-08-15']):
-		URL ="https://api.telegram.org/"+auth+"/sendMessage?chat_id=@stonkchan&text= Today is National Holiday hence the markets were closed."
-	response = requests.post(URL)
-	logger.info(": Telegram Bot - Markets Closed - Response Status Code: "+str(response))
+		message = "Today is "+day+" hence the markets were closed."
+	elif(today in [str(currentyear)+'-01-26', str(currentyear)+'-08-15']):
+		message = "Today is National Holiday hence the markets were closed."
+
+
+URL ="https://api.telegram.org/"+auth+"/sendMessage?chat_id=@stonkchan&text="+message
+response = requests.post(URL)
+logger.info(": Telegram Bot Response Status Code: "+str(response))
